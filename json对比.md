@@ -105,8 +105,13 @@ web网站--在线json对比工具
                 addcontroller.add(serviceNameElement2.getAsJsonArray().get(number).getAsJsonObject().get("path").getAsString());
             }
         }
+
+        List<List<String>> listOfLists = new ArrayList<>(); //泛型列表返回
+        listOfLists.add(deletecontroller);
+        listOfLists.add(addcontroller);
         System.out.println("success");
-        return toAjax(recordService.insertRecord(record));
+
+        return success(listOfLists);
     }
 ```
 
@@ -116,51 +121,64 @@ web网站--在线json对比工具
 
 前端的实现主要靠文心一言，样式布局调整的时候要注意后续如何将样式随着视口高度随时调整[后续改进]
 
+**下面的!!!!!部分需要适配下**
+
 ```vue
 <template>  
   <div>  
-    <el-container style="height: 100vh;">  
-      <el-header style="height: 200px;"> <!-- 将高度设置为更大的值 -->    
-        <el-row type="flex" justify="center" align="middle" class="header-row">  
+    <el-container style="height: 100vh;">  <!-- 100vh 视界高度 -->  
+      <el-header style="height: 200px;"> <!-- 将高度设置为更大的值，防止header 中的路径、按钮高度不够-->    
+        <el-row type="flex" justify="center" align="middle" class="header-row">   <!-- 采用flex布局+span占比方法--> 
           <el-col :span="24" class="header-text-container">  
             <span class="header-text">json接口在线对比</span>  
           </el-col>  
         </el-row>  
         <el-row type="flex" justify="center" align="middle" class="input-row" style="margin-top: 20px;">  
           <el-col :span="8">  
-            <el-input placeholder="请输入：json1的服务器路径，如:/tmp/1.json"></el-input>  
+            <el-input
+              placeholder="请输入：json1的服务器路径，如:/tmp/1.json"
+              v-model="input1"
+              clearable>
+            </el-input> 
           </el-col>  
           <el-col :span="8">  
-            <el-input placeholder="请输入：json2的服务器路径，如:/tmp/2.json"></el-input>  
+            <el-input
+              placeholder="请输入：json2的服务器路径，如:/tmp/2.json"
+              v-model="input2"
+              clearable>
+            </el-input>  
           </el-col>  
         </el-row>  
         <el-row type="flex" justify="center" align="middle" class="button-row" style="margin-top: 20px;">  
-          <el-button type="primary" round>提交对比</el-button>  
+          <el-button type="primary" @click="submitPath" round>提交对比</el-button>  
         </el-row>  
       </el-header>  
-      <el-main class="main-content" style="padding-top: 50px;">  
-        <el-row :gutter="20" class="rounded-main">  
-          <el-col :span="11" class="column-content">  
-            <div class="column-title">列标题1</div>  
-            <el-table :data="tableData1" style="width: 100%" border>  
-              <el-table-column prop="index" label="索引号" width="80"></el-table-column>  
-              <el-table-column prop="content" label="内容"></el-table-column>  
+      <el-main class="main-content" style="padding-top: 150px;">  <!-- el-main 距离head保持一定距离，防止被覆盖，后续可以ui继续优化--> 
+        <div class="main-content" style="border-radius: 20px; border: 3px solid #555;">  
+        <el-row type="flex" justify="center" class="content-row">  <!-- content-row占比一定要css一定要100%，不然都挤到左边了（文心一言）--> 
+          <el-col :span="11" class="column-container">  
+            <div class="column-title">删除接口列表</div>  
+            <el-table v-loading="loading" :data="tableList1" style="width: 100%; border-radius: 10px;">  <!-- width一定要css一定要100%，不然都挤到左边了（文心一言）--> 
+              <el-table-column prop="index" label="编号" width="60"></el-table-column>  
+              <el-table-column prop="content" label="接口" width="600"></el-table-column>  
             </el-table>  
           </el-col>  
-          <el-col :span="11" class="column-content">  
-            <div class="column-title">列标题2</div>  
-            <el-table :data="tableData2" style="width: 100%" border>  
-              <el-table-column prop="index" label="索引号" width="80"></el-table-column>  
-              <el-table-column prop="content" label="内容"></el-table-column>  
+          <el-col :span="11" class="column-container">  
+            <div class="column-title">新增接口列表</div>  
+            <el-table v-loading="loading" :data="tableList2" style="width: 100%; border-radius: 10px;">  
+              <el-table-column prop="index" label="编号" width="60"></el-table-column>  
+              <el-table-column prop="content" label="接口" width="600"></el-table-column>  
             </el-table>  
           </el-col>  
         </el-row>  
+      </div>  
       </el-main>  
     </el-container>  
   </div>  
 </template>  
   
 <script>  
+import { Jsoncompare } from "@/api/sectool/record";
 export default {  
   name: 'MyLayout',  
   data() {  
@@ -168,15 +186,64 @@ export default {
       tableData1: [  
         { index: 1, content: '内容1' },  
         { index: 2, content: '内容2' },  
-        // ...更多数据  
+        { index: 2, content: '内容2' },  
+        { index: 2, content: '内容2' },  
+        { index: 2, content: '内容2' },  
+        { index: 2, content: '内容2' },  
+        { index: 2, content: '内容2' },  
+        { index: 2, content: '内容2' },  
+        { index: 2, content: '内容2' },  
+        { index: 2, content: '内容2' },  
+        { index: 2, content: '内容2' },  
+        { index: 2, content: '内容2' },  
+        { index: 2, content: '内容2' },  
+        { index: 2, content: '内容2' },  
+        
+        // ...mock数据参考 
       ],  
       tableData2: [  
         { index: 1, content: '内容A' },  
         { index: 2, content: '内容B' },  
-        // ...更多数据  
-      ]  
+        // ...mock数据参考 
+      ],
+      input1: '',  
+      input2: '',
+
+      loading:false, 
+
+      adaptivejson: { //暂为了发送请求适配下，后续修改成自己的mapper传送！！！！！！！
+        taskname: null,
+        master: null,
+      },
+
+      tableList1:[],
+      tableList2:[],
     };  
-  }  
+  } ,
+  methods:{
+    submitPath(){
+      this.loading=true;
+      console.log(this.input1);
+      console.log(this.input2);
+      this.adaptivejson.taskname=this.input1; //暂时适配下，后续修改成自己的mapper传送！！！！！
+      this.adaptivejson.master=this.input2; //暂时适配下，后续修改成自己的mapper传送！！！！！
+      Jsoncompare(this.adaptivejson).then(response => {
+        console.log(response);
+        // 下面为了先将后端泛型分别处理，然后将List<string>类型转为类似json格式，有index和content2个部分
+        this.tableList1 = response.data[0].map((content, index) => ({ // 映射为带有索引的对象数组  
+            index: index + 1, // 索引通常从1开始，根据需要调整  
+            content: content,  
+          }));  
+        this.tableList2 = response.data[1].map((content, index) => ({ // 映射为带有索引的对象数组  
+            index: index + 1, // 索引通常从1开始，根据需要调整  
+            content: content,  
+          })); 
+        console.log(this.tableList1);
+        console.log(this.tableList2);
+        this.loading = false;
+      });
+    }
+  } ,
 };  
 </script>  
   
@@ -206,8 +273,10 @@ export default {
   
 .main-content {  
   display: flex;  
-  flex-direction: column;  
-  align-items: flex-start;  
+  justify-content: center;  
+  align-items: center;  
+  flex-direction: column; /* 垂直居中 */  
+  padding: 20px; /* 为内容添加内边距 */  
 }  
   
 .rounded-main {  
@@ -228,8 +297,11 @@ export default {
 }  
   
 /* 表格样式 */  
+/* 设置表格样式 */  
 .el-table {  
-  border-radius: 10px; /* 表格圆角 */  
+  width: 100%; /* 确保表格宽度填满列容器 */  
+  margin-bottom: 20px; /* 设置表格之间的间距 */  
+  border-radius: 10px; /* 设置表格圆角 */  
 }  
   
 .el-table__header-wrapper {  
@@ -240,6 +312,7 @@ export default {
   display: flex;  
   flex-direction: column;  
   height: 100vh; /* 设置容器高度为视口高度 */  
+  width: 100vw;
 }  
   
 .el-header {  
@@ -251,12 +324,28 @@ export default {
   /* el-main 会自动占据剩余空间 */  
   flex: 1;  
 }
+
+.content-row {  
+  width: 100%; /* 使内容行占据整个main-content的宽度 */  
+} 
+
+.column-container {  
+  display: flex;  
+  flex-direction: column;  
+  align-items: center;  
+}  
 </style>
 
+```
 
-
-
-
-
+```vue
+// 新增json对比扫描，后续路径需要修改下,在导出的js下面 需要将record路径去掉
+export function Jsoncompare(data) {
+  return request({
+    url: '/sectool/record/Jsoncompare',
+    method: 'post',
+    data: data
+  })
+}
 ```
 
